@@ -22,12 +22,13 @@ if(!require("ggsci"))install.packages("ggsci")
 if(!require("ggpubr"))install.packages("ggpubr")
 if(!require("reshape"))install.packages("reshape")
 
-#if(!require("reshape2"))install.packages("reshape2")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install()
 
-BiocManager::install(c("reshape2"))
+
+##Install reshape2 package
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+#BiocManager::install()
+#BiocManager::install(c("reshape2"))
 
 
 packageVersion("dplyr")
@@ -38,7 +39,7 @@ remove.packages("vctrs")
 install.packages("rlang",version="0.4.7")
 install.packages("dplyr",version="1.0.0")
 install.packages("vctrs",version="0.3.2")
-
+install.packages("pwr")
 
 library(ggplot2)
 library(dplyr)
@@ -47,7 +48,7 @@ library(ggsci)
 library(ggpubr)
 library(reshape)
 library(reshape2)
-
+library(pwr)
 #step 3 import data
 
 
@@ -69,7 +70,48 @@ sex <- data.frame(p=c(42,30), PS=c(30,39))
 p.sex <- chisq.test(sex)
 
 
+#power analysis
+?pwr.2p.test()
+?pwr.2p2n.test()
+pwr.2p2n.test(h=NULL, n1=71, n2=69, sig.level = 0.05, power = 0.8, 
+              alternative = "two.sided")
 
+##calculate ANOVA power
+es<- seq(0.1,0.5,0.01)
+nes <- length(es)
+samsize <-NULL
+for(i in 1:nes){
+  
+  result <- pwr.anova.test(k=5, f=es[i],sig.level = 0.05, power = 0.9)
+  samsize[i]<-ceiling(result$n)
+}
+
+
+plot(samsize,es,type="l",lwd=2, col="red",ylab="Effect size",xlab="Sample size", main = "One Way ANOVA with Power =0.9")
+
+
+##calculate power analysis
+es<- seq(0.2,0.9,0.01)
+nes <- length(es)
+samsize <-NULL
+for(i in 1:nes){
+  result <- pwr.2p2n.test(h=es[i],n1 = 71, n2=69, sig.level = 0.05)
+  samsize[i]<-result$power
+}
+
+
+plot(es,samsize,type="l",lwd=2, col="red",xlab="Effect size",ylab="Power value")
+power1 <- pwr.2p2n.test(h=0.5,n1 = 71, n2=69, sig.level = 0.05)
+pw1 <-power1$power
+abline(v=0.5,col="blue",lty=3)
+
+power2 <- pwr.2p2n.test(h=0.8,n1 = 71, n2=69, sig.level = 0.05)
+pw2 <-power2$power
+abline(v=0.8,col="blue",lty=3)
+
+power3 <- pwr.2p2n.test(h=0.3,n1 = 71, n2=69, sig.level = 0.05)
+pw3 <-power3$power
+abline(v=0.3,col="blue",lty=3)
 
 ##-----------------------------##--------------------------------------##
 
@@ -165,9 +207,9 @@ dataA = data3
 i="qNOX"
 P <- compare_means(data=dataA, value~Group, group.by = "variable", method = 'wilcox.test')
 #compare_means(data=data3, value~Group, group.by = "variable")
-data33<-na.omit(dataA)
-Mean<-aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),mean)
-SD<- aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),sd)
+#data33<-na.omit(dataA)
+Mean<-aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),mean, na.rm=TRUE)
+SD<- aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),sd, na.rm=TRUE)
 
 P <- as.data.frame(P)
 P$P_mean <- NA
@@ -686,5 +728,16 @@ ggplot(data=data15, aes(x=variable, y=value))+
   scale_y_continuous("EMG value",limits = c(40,100))
 
 
-#---------------------End----------------------------#
+
+
+
+
+
+
+
+
+
+
+
+
 
