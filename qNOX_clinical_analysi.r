@@ -687,7 +687,8 @@ write.csv(P,file=paste(i,"_wilcox_test.csv",sep = ""))  #use paste() function to
 
 data14 <- read.table("table_8_EMG_data.txt",header = T)
 data15 <- melt(data14, id=c("Group","ID","sample"))
-
+max(na.omit(data15$value))
+min(na.omit(data15$value))
 #code for SBP test
 #1. P value = ***
 windowsFonts(myFont = windowsFont("Calibri"))
@@ -696,7 +697,7 @@ ggplot(data=data15, aes(x=variable, y=value))+
   stat_summary(aes(group=Group, color=Group),fun=mean,geom="line",cex=0.9)+
   stat_summary(aes(group=Group, color=Group),fun.data = mean_se,geom="errorbar",width=0.3,cex=0.9)+
   theme_classic()+
-  stat_compare_means(aes(group=as.factor(Group)),method="wilcox.test",label = "p.signif", hide.ns = T, label.y=c(100,rep(62,12),63,62))+
+  stat_compare_means(aes(group=as.factor(Group)),method="wilcox.test",label = "p.signif", hide.ns = T, label.y=c(100,26,rep(16,11),63,62))+
   scale_color_manual(values = pal_jama()(7)[c(1,7)])+
   scale_fill_manual(values = pal_jama()(7)[c(1,7)])+
   theme(legend.position = c(0.8,0.9), 
@@ -706,7 +707,7 @@ ggplot(data=data15, aes(x=variable, y=value))+
         text = element_text(color = "black",  size=14, family="myFont"),
         axis.text = element_text(color = "black",  size=13, family="myFont"))+
   scale_x_discrete("Time points")+
-  scale_y_continuous("EMG value",limits = c(40,100))
+  scale_y_continuous("EMG value",limits = c(0,120))
 
 #2 P value = 0.005
 windowsFonts(myFont = windowsFont("Calibri"))
@@ -725,11 +726,34 @@ ggplot(data=data15, aes(x=variable, y=value))+
         text = element_text(color = "black",  size=14, family="myFont"),
         axis.text = element_text(color = "black",  size=13, family="myFont"))+
   scale_x_discrete("Time points")+
-  scale_y_continuous("EMG value",limits = c(40,100))
+  scale_y_continuous("EMG value",limits = c(0,120))
 
 
 
 
+
+###calculate the P value and mean
+library(ggpubr)
+dataA = data15
+i="EMG"
+P <- compare_means(data=dataA, value~Group, group.by = "variable", method = 'wilcox.test')
+#compare_means(data=data3, value~Group, group.by = "variable")
+data33<-na.omit(dataA)
+Mean<-aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),mean)
+SD<- aggregate(data33$value,by=list(Group=data33$Group,variable=data33$variable),sd)
+
+P <- as.data.frame(P)
+P$P_mean <- NA
+P$P_sd <-NA
+P$PS_mean <- NA
+P$PS_sd <-NA
+
+P$P_mean <- Mean$x[which(Mean$Group=="P")]
+P$P_sd <- SD$x[which(SD$Group=="P")]
+P$PS_mean <- Mean$x[which(Mean$Group=="PS")]
+P$PS_sd <- SD$x[which(SD$Group=="PS")]
+P
+write.csv(P,file=paste(i,"_wilcox_test.csv",sep = ""))  #use paste() function to establish a common usd file name
 
 
 
